@@ -1,5 +1,7 @@
 package trie
 
+import "unicode/utf8"
+
 // RuneTrie is a trie of runes with string keys and interface{} values.
 // Note that internal nodes have nil values so a stored nil value will not
 // be distinguishable and will not be included in Walks.
@@ -23,6 +25,36 @@ func (trie *RuneTrie) Get(key string) interface{} {
 			return nil
 		}
 	}
+	return node.value
+}
+
+func (trie *RuneTrie) GetFromRunes(key []rune) interface{} {
+	node := trie
+	for _, r := range key {
+		node = node.children[r]
+		if node == nil {
+			return nil
+		}
+	}
+	return node.value
+}
+
+func (trie *RuneTrie) GetFromBytes(key []byte) interface{} {
+	node := trie
+
+	for len(key) > 0 {
+		r, size := utf8.DecodeRune(key)
+		if r == utf8.RuneError || size == 0 {
+			return nil
+		}
+
+		node = node.children[r]
+		if node == nil {
+			return nil
+		}
+		key = key[size:]
+	}
+
 	return node.value
 }
 
